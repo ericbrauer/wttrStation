@@ -1,10 +1,11 @@
 #include "dht11.h"
 #include <ShiftLCD.h>
 #include <Ethernet.h>
+#include <EthernetUdp.h>
+#include <SPI.h>
 
 byte mac[] = {
   0x90, 0xA2, 0xDA, 0x0D, 0x10, 0x78 };
-};
 
 dht11 DHT;
 // initialize the library with the numbers of the interface pins
@@ -123,7 +124,8 @@ void setup(){
 	Serial.println(DHT11LIB_VERSION);
 	Serial.println("Type,\tstatus,\tHumidity (%),\tTemperature (C)");
 	// start Ethernet and UDP
-    if (Ethernet.begin(mac) == 0) {
+    Ethernet.init(10);
+	if (Ethernet.begin(mac) == 0) {
 		Serial.println("Failed to configure Ethernet using DHCP");
 		// Check for Ethernet hardware present
 		if (Ethernet.hardwareStatus() == EthernetNoHardware) {
