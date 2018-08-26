@@ -1,8 +1,11 @@
 #include "dht11.h"
 #include <ShiftLCD.h>
-#include <Ethernet.h>
+#include "Ethernet.h"
 #include <EthernetUdp.h>
 #include <SPI.h>
+
+// TODO: ntp too many!! print as UTC. lower the number of requests.
+// TODO: if internet fails, indicate but proceed with everything else.
 
 byte mac[] = {
   0x90, 0xA2, 0xDA, 0x0D, 0x10, 0x78 };
@@ -124,16 +127,16 @@ void setup(){
 	Serial.println(DHT11LIB_VERSION);
 	Serial.println("Type,\tstatus,\tHumidity (%),\tTemperature (C)");
 	// start Ethernet and UDP
-    Ethernet.init(10);
+    //Ethernet.init(10);
 	if (Ethernet.begin(mac) == 0) {
 		Serial.println("Failed to configure Ethernet using DHCP");
 		// Check for Ethernet hardware present
-		if (Ethernet.hardwareStatus() == EthernetNoHardware) {
-			Serial.println("Ethernet shield was not found.  Sorry, can't run without hardware. :(");
-		} 
-		else if (Ethernet.linkStatus() == LinkOFF) {
-			Serial.println("Ethernet cable is not connected.");
-		}
+		//if (Ethernet.hardwareStatus() == EthernetNoHardware) {
+		//	Serial.println("Ethernet shield was not found.  Sorry, can't run without hardware. :(");
+		//} 
+		//else if (Ethernet.linkStatus() == LinkOFF) {
+		//	Serial.println("Ethernet cable is not connected.");
+		//}
 		// no point in carrying on, so do nothing forevermore:
 		while (true) {
 			delay(1);
