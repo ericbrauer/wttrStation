@@ -6,7 +6,23 @@ dht11 DHT;
 ShiftLCD lcd(2, 4, 3);
 
 #define DHT11_PIN 5
+void printToLcd() {
 
+	// DISPLAY DATA
+	lcd.setCursor(0, 0);
+	lcd.print("Temp: ");
+	lcd.setCursor(6, 0);
+	lcd.print(DHT.temperature);
+	lcd.setCursor(9,0);
+	lcd.print(char(223));
+	lcd.print("C");
+	lcd.setCursor(0,1);
+	lcd.print("Humid: ");
+	lcd.setCursor(7,1);
+	lcd.print(DHT.humidity);
+	lcd.setCursor(10,1);
+	lcd.print("%");
+}
 void setup(){
 	Serial.begin(9600);
 	Serial.println("DHT TEST PROGRAM ");
@@ -40,20 +56,7 @@ void loop(){
 			lcd.print("Error??");
 			break;
 	}
-	// DISPLAY DATA
-	lcd.setCursor(0, 0);
-	lcd.print("Temp: ");
-	lcd.setCursor(6, 0);
-	lcd.print(DHT.temperature);
-	lcd.setCursor(9,0);
-	lcd.print(char(223));
-	lcd.print("C");
-	lcd.setCursor(0,1);
-	lcd.print("Humid: ");
-	lcd.setCursor(7,1);
-	lcd.print(DHT.humidity);
-	lcd.setCursor(10,1);
-	lcd.print("%");
+	printToLcd();
 	Serial.print(DHT.humidity,1);
 	Serial.print(",\t");
 	Serial.println(DHT.temperature,1);
