@@ -1,6 +1,6 @@
 #include "dht11.h"
 #include <ShiftLCD.h>
-#include "Ethernet.h"
+#include <Ethernet.h>
 #include <EthernetUdp.h>
 #include <SPI.h>
 
@@ -26,39 +26,36 @@ const int NTP_PACKET_SIZE = 48; // NTP time stamp is in the first 48 bytes of th
 
 byte packetBuffer[NTP_PACKET_SIZE]; //buffer to hold incoming and outgoing packets
 
+int minuteCounter = 0;
+
+unsigned long epoch;
+
 // A UDP instance to let us s20jend and receive packets over UDP
 EthernetUDP Udp;
 
-void NTPRequest() {
-	sendNTPpacket(timeServer); // send an NTP packet to a time server
+unsigned long handleNTPResponse() {
+	// We've received a packet, read the data from it
+	Udp.read(packetBuffer, NTP_PACKET_SIZE); // read the packet into the buffer
 
-	// wait to see if a reply is available
-	delay(1000);
-	if (Udp.parsePacket()) {
-		// We've received a packet, read the data from it
-		Udp.read(packetBuffer, NTP_PACKET_SIZE); // read the packet into the buffer
+	// the timestamp starts at byte 40 of the received packet and is four bytes,
+	// or two words, long. First, extract the two words:
 
-		// the timestamp starts at byte 40 of the received packet and is four bytes,
-		// or two words, long. First, extract the two words:
-
-		unsigned long highWord = word(packetBuffer[40], packetBuffer[41]);
-		unsigned long lowWord = word(packetBuffer[42], packetBuffer[43]);
-		// combine the four bytes (two words) into a long integer
-		// this is NTP time (seconds since Jan 1 1900):
-		unsigned long secsSince1900 = highWord << 16 | lowWord;
-		Serial.print("Seconds since Jan 1 1900 = ");
-		Serial.println(secsSince1900);
-
-		// now convert NTP time into everyday time:
-		Serial.print("Unix time = ");
-		// Unix time starts on Jan 1 1970. In seconds, that's 2208988800:
-		const unsigned long seventyYears = 2208988800UL;
-		// subtract seventy years:
-		unsigned long epoch = secsSince1900 - seventyYears;
-		// print Unix time:
-		Serial.println(epoch);
+	unsigned long highWord = word(packetBuffer[40], packetBuffer[41]);
+	unsigned long lowWord = word(packetBuffer[42], packetBuffer[43]);
+	// combine the four bytes (two words) into a long integer
+	// this is NTP time (seconds since Jan 1 1900):
+	unsigned long secsSince1900 = highWord << 16 | lowWord;
+	// now convert NTP time into everyday time:
+	Serial.print("Unix time = ");
+	// Unix time starts on Jan 1 1970. In seconds, that's 2208988800:
+	const unsigned long seventyYears = 2208988800UL;
+	// subtract seventy years:
+	return secsSince1900 - seventyYears;
+}
+	
 
 
+void epochToUTC() {
 		// print the hour, minute and second:
 		Serial.print("The UTC time is ");       // UTC is the time at Greenwich Meridian (GMT)
 		Serial.print((epoch  % 86400L) / 3600); // print the hour (86400 equals secs per day)
@@ -75,10 +72,6 @@ void NTPRequest() {
 		}
 		Serial.println(epoch % 60); // print the second
 	}
-	// wait ten seconds before asking for the time again
-	delay(10000);
-	Ethernet.maintain();
-}
 
 	// send an NTP request to the time server at the given address
 void sendNTPpacket(const char * address) {
@@ -130,17 +123,7 @@ void setup(){
     //Ethernet.init(10);
 	if (Ethernet.begin(mac) == 0) {
 		Serial.println("Failed to configure Ethernet using DHCP");
-		// Check for Ethernet hardware present
-		//if (Ethernet.hardwareStatus() == EthernetNoHardware) {
-		//	Serial.println("Ethernet shield was not found.  Sorry, can't run without hardware. :(");
-		//} 
-		//else if (Ethernet.linkStatus() == LinkOFF) {
-		//	Serial.println("Ethernet cable is not connected.");
-		//}
-		// no point in carrying on, so do nothing forevermore:
-		while (true) {
-			delay(1);
-		}
+		// raise flag to indicate on LCD.
 	}
 	Udp.begin(localPort);
 	// set up the LCD's number of rows and columns: 
@@ -170,7 +153,13 @@ void loop(){
 			lcd.print("Error??");
 			break;
 	}
-	NTPRequest();
+	// Every hour or so, ping for an update of NTP.
+	if (minuteCounter >= 3600) {
+		minuteCounter = 0;
+		sendNTPpacket(timeServer); // send an NTP packet to a time server
+	}
+	else
+		minuteCounter++;
 	printToLcd();
 	Serial.print(DHT.humidity,1);
 	Serial.print(",\t");
@@ -178,4 +167,11 @@ void loop(){
 	Serial.print("Gas: ");
 	Serial.println(gas,DEC);
 	delay(1000);
+	if (Udp.parsePacket())
+		epoch = handleNTPResponse();
+	else
+		epoch++;
+	Serial.print("Unix Time = ");
+	Serial.println(epoch);
+	Ethernet.maintain();
 }
