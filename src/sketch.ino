@@ -4,7 +4,7 @@
 #include <EthernetUdp.h>
 #include <SPI.h>
 
-// TODO: ntp too many!! print as UTC. lower the number of requests.
+// TODO: Fix the timing, or import a library.
 // TODO: if internet fails, indicate but proceed with everything else.
 
 byte mac[] = {
@@ -128,6 +128,7 @@ void setup(){
 	Udp.begin(localPort);
 	// set up the LCD's number of rows and columns: 
     lcd.begin(16, 2);
+	sendNTPpacket(timeServer); // send an NTP packet to a time server
 }
 
 void loop(){
