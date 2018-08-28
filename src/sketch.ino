@@ -3,6 +3,8 @@
 #include <Ethernet.h>
 #include <EthernetUdp.h>
 #include <SPI.h>
+#include <SD.h>
+#include <TimeLib.h> // https://www.pjrc.com/teensy/td_libs_Time.html
 
 // TODO: Fix the timing, or import a library.
 // TODO: if internet fails, indicate but proceed with everything else.
@@ -29,6 +31,8 @@ byte packetBuffer[NTP_PACKET_SIZE]; //buffer to hold incoming and outgoing packe
 int minuteCounter = 0;
 
 unsigned long epoch;
+
+File wttrLog;
 
 // A UDP instance to let us s20jend and receive packets over UDP
 EthernetUDP Udp;
@@ -118,6 +122,15 @@ void setup(){
 	Serial.println("DHT TEST PROGRAM ");
 	Serial.print("LIBRARY VERSION: ");
 	Serial.println(DHT11LIB_VERSION);
+	Serial.print("Initializing SD card....");
+	if (!SD.begin(4)) {
+		Serial.println("initialization failed.");
+
+	}
+	Serial.println("initialization complete.");
+	wttrLog = SD.open("wttrLog.csv", FILE_WRITE);
+	wttrLog.println("Beginning of log.");
+	wttrLog.close();	
 	Serial.println("Type,\tstatus,\tHumidity (%),\tTemperature (C)");
 	// start Ethernet and UDP
     //Ethernet.init(10);
@@ -168,10 +181,10 @@ void loop(){
 	Serial.print("Gas: ");
 	Serial.println(gas,DEC);
 	delay(1000);
-	if (Udp.parsePacket())
+	if (Udp.parsePacket()) { 
 		epoch = handleNTPResponse();
-	else
-		epoch++;
+		setTime(epoch); 
+	}
 	Serial.print("Unix Time = ");
 	Serial.println(epoch);
 	Ethernet.maintain();
