@@ -38,6 +38,7 @@ File wttrLog;
 EthernetUDP Udp;
 
 unsigned long handleNTPResponse() {
+	Serial.println("We have received a response");
 	// We've received a packet, read the data from it
 	Udp.read(packetBuffer, NTP_PACKET_SIZE); // read the packet into the buffer
 
@@ -50,7 +51,7 @@ unsigned long handleNTPResponse() {
 	// this is NTP time (seconds since Jan 1 1900):
 	unsigned long secsSince1900 = highWord << 16 | lowWord;
 	// now convert NTP time into everyday time:
-	Serial.print("Unix time = ");
+	// Serial.print("Unix time = ");
 	// Unix time starts on Jan 1 1970. In seconds, that's 2208988800:
 	const unsigned long seventyYears = 2208988800UL;
 	// subtract seventy years:
@@ -98,6 +99,7 @@ void sendNTPpacket(const char * address) {
 	Udp.beginPacket(address, 123); // NTP requests are to port 123
 	Udp.write(packetBuffer, NTP_PACKET_SIZE);
 	Udp.endPacket();
+	Serial.println("NTP packet sent.");
 }
 
 void printToLcd() {
@@ -186,6 +188,6 @@ void loop(){
 		setTime(epoch); 
 	}
 	Serial.print("Unix Time = ");
-	Serial.println(epoch);
+	Serial.println(now());
 	Ethernet.maintain();
 }
