@@ -32,6 +32,8 @@ int minuteCounter = 0;
 
 unsigned long epoch;
 
+time_t t;
+
 File wttrLog;
 
 // A UDP instance to let us s20jend and receive packets over UDP
@@ -102,6 +104,14 @@ void sendNTPpacket(const char * address) {
 	Serial.println("NTP packet sent.");
 }
 
+void printDigits(int digits){
+  // utility function for digital clock display: prints preceding colon and leading 0
+  if(digits < 10)
+    lcd.print('0');
+  lcd.print(digits);
+}
+
+
 void printToLcd() {
 
 	// DISPLAY DATA
@@ -109,15 +119,25 @@ void printToLcd() {
 	lcd.print("Temp: ");
 	lcd.setCursor(6, 0);
 	lcd.print(DHT.temperature);
-	lcd.setCursor(9,0);
+	lcd.setCursor(8,0);
 	lcd.print(char(223));
 	lcd.print("C");
 	lcd.setCursor(0,1);
 	lcd.print("Humid: ");
 	lcd.setCursor(7,1);
 	lcd.print(DHT.humidity);
-	lcd.setCursor(10,1);
+	lcd.setCursor(9,1);
 	lcd.print("%");
+	if (timeStatus()) {
+		lcd.setCursor(11,0);
+		lcd.print((hour() - 4));
+		lcd.setCursor(13,0);
+		lcd.print(":");
+		if (minute() < 10) {
+			lcd.print("0");
+		}
+		lcd.print(minute());
+	}
 }
 void setup(){
 	Serial.begin(9600);
@@ -144,6 +164,7 @@ void setup(){
 	// set up the LCD's number of rows and columns: 
     lcd.begin(16, 2);
 	sendNTPpacket(timeServer); // send an NTP packet to a time server
+	t = now();
 }
 
 void loop(){
@@ -170,7 +191,7 @@ void loop(){
 			break;
 	}
 	// Every hour or so, ping for an update of NTP.
-	if (minuteCounter >= 3600) {
+	if (minuteCounter >= 60) {
 		minuteCounter = 0;
 		sendNTPpacket(timeServer); // send an NTP packet to a time server
 	}
@@ -189,5 +210,9 @@ void loop(){
 	}
 	Serial.print("Unix Time = ");
 	Serial.println(now());
+	wttrLog = SD.open("wttrLog.csv", FILE_WRITE);
+	wttrLog.print("Unix Time = ");
+	wttrLog.println(now());
+	wttrLog.close();
 	Ethernet.maintain();
 }
