@@ -151,19 +151,29 @@ void loop(){
 	else
 		minuteCounter++;
 	printToLcd();
+	Serial.print(UTCString());
 	Serial.print(DHT.humidity,1);
 	Serial.print(",\t");
-	Serial.println(DHT.temperature,1);
-	Serial.print("Gas: ");
+	Serial.print(DHT.temperature,1);
+	Serial.print(",\t");
 	Serial.println(gas,DEC);
-	delay(1000);
-	Serial.print("Unix Time = ");
-	Serial.println(now());
+	//Serial.print("Unix Time = ");
+	//Serial.println(now());
 	wttrLog = SD.open("wttrLog.csv", FILE_WRITE);
-	wttrLog.print("Unix Time = ");
-	wttrLog.println(now());
+	wttrLog.print(UTCString());
+	wttrLog.print(",\"");
+	wttrLog.print(DHT,humidity,1);
+	wttrLog.print("\",\"");
+	wttrLog.print(DHT.temperature,1);
+	wttrLog.println("\"");
 	wttrLog.close();
+	delay(1000);
 	Ethernet.maintain();
+}
+
+String return UTCString() {
+	String datastring = "\"" + year() + "-" + month() + "-" + day() + "T" + hour() + ":" + minute() + ":" + second() + timeZone + ":00\"";
+	return datastring;
 }
 
 /*-----------NTP Code for TimeLib.h------------------------------------------*/
