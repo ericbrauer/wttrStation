@@ -6,38 +6,25 @@
 #include <SD.h>
 #include <TimeLib.h> // https://www.pjrc.com/teensy/td_libs_Time.html
 
-// TODO: Fix the timing, or import a library.
-// TODO: if internet fails, indicate but proceed with everything else.
-
 byte mac[] = {
   0x90, 0xA2, 0xDA, 0x0D, 0x10, 0x78 };
 
 IPAddress timeServer(158, 69, 125, 231);
 
 const int timeZone = -4;
+// TODO make this not be static OR be able to change with cursor
 
 dht11 DHT;
+
 // initialize the library with the numbers of the interface pins
 ShiftLCD lcd(2, 6, 3);
 
 #define SD_CS_PIN 4
 #define DHT11_PIN 5
 
-// The following are defs required for NTP
-
 unsigned int localPort = 8888;       // local port to listen for UDP packets
 
-//const char timeServer[] = "time.nist.gov"; // time.nist.gov NTP server
-
-//const int NTP_PACKET_SIZE = 48; // NTP time stamp is in the first 48 bytes of the message
-
-//byte packetBuffer[NTP_PACKET_SIZE]; //buffer to hold incoming and outgoing packets
-
 int minuteCounter = 0;
-
-//unsigned long epoch;
-
-time_t prevDisplay = 0;
 
 File wttrLog;
 
@@ -55,7 +42,6 @@ void printDigits(int digits){
 
 void printToLcd() {
 	// DISPLAY DATA
-	//lcd.clear();
 	lcd.setCursor(0, 0);
 	lcd.print("Temp: ");
 	lcd.setCursor(6, 0);
@@ -70,6 +56,7 @@ void printToLcd() {
 	lcd.setCursor(9,1);
 	lcd.print("%");
 	if (timeStatus() != timeNotSet) {
+		// TODO Make this work with the printDigits function.
 		lcd.setCursor(11,0);
 		lcd.print(hour());
 		lcd.setCursor(13,0);
@@ -88,35 +75,37 @@ void setup(){
 	Serial.print("Initializing SD card....");
 	if (!SD.begin(SD_CS_PIN)) {
 		Serial.println("SD Card initialization failed!");
-
-	}
-	Serial.println("initialization complete.");
+	else 
+		Serial.println("initialization complete.");
+	
+	// TODO: it'd be good to not try and do all these writes if init has failed.
 	wttrLog = SD.open("wttrLog.csv", FILE_WRITE);
 	wttrLog.println("Beginning of log.");
 	wttrLog.close();	
+	
 	// start Ethernet and UDP
 	if (Ethernet.begin(mac) == 0) {
 		Serial.println("Failed to configure Ethernet using DHCP");
-		// raise flag to indicate on LCD.
+		// TODO: raise flag to indicate on LCD.
 	}
 	Serial.print("IP Address is ");
 	Serial.println(Ethernet.localIP());
+	
 	// set up the LCD's number of rows and columns: 
     lcd.begin(16, 2);
 	lcd.setCursor(0, 0);
 	lcd.print(Ethernet.localIP());
 	delay(3000);
 	lcd.clear();
+
 	Udp.begin(localPort);
 	setSyncProvider(getNtpTime);
-	//sendNTPpacket(timeServer); // send an NTP packet to a time server
 	Serial.println("Type,\tstatus,\tHumidity (%),\tTemperature (C),\tGas");
 }
 
 void loop(){
 	int chk;
 	int gas;
-	//Serial.print("DHT11, \t");
 	chk = DHT.read(DHT11_PIN); // READ DATA
 	gas = analogRead(0);
 	switch (chk) {
@@ -136,13 +125,11 @@ void loop(){
 			lcd.print("Error??");
 			break;
 	}
-	// Every hour or so, ping for an update of NTP.
-	if (timeStatus() != timeNotSet) {
-		if (now() != prevDisplay) {
-			prevDisplay = now();
 
-		}
-	}
+	// If ntp has failed, keep trying.
+	// TODO: wouldn't it be cool if we cycled through an array of ntp addresses, rather than keep trying the one? 
+	if (timeStatus() != timeNotSet)
+		Serial.println("Time is set properly! :D")
 	else {
 		setSyncProvider(getNtpTime);
 	}
@@ -169,8 +156,6 @@ void loop(){
 	Serial.print(DHT.temperature,1);
 	Serial.print(",\t");
 	Serial.println(gas,DEC);
-	//Serial.print("Unix Time = ");
-	//Serial.println(now());
 	Ethernet.maintain();
 	delay(1000);
 }
@@ -180,7 +165,7 @@ String UTCString() {
 	return datastring;
 }
 
-/*-----------NTP Code for TimeLib.h------------------------------------------*/
+/*----------- NTP Code for TimeLib.h ------------------------------------------*/
 
 const int NTP_PACKET_SIZE = 48; // NTP time is in the first 48 bytes of message
 byte packetBuffer[NTP_PACKET_SIZE]; //buffer to hold incoming & outgoing packets
