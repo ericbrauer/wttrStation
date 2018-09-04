@@ -30,3 +30,9 @@
 *.exe
 *.out
 *.app
+.build/environment.pickle
+.build/mega2560/Makefile
+
+# Eric's Adds for Arduino
+.build/*
+.vscode/*
