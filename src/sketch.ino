@@ -58,6 +58,8 @@ void printToLcd() {
 	if (timeStatus() != timeNotSet) {
 		// TODO Make this work with the printDigits function.
 		lcd.setCursor(11,0);
+		if (hour() < 10)
+			lcd.print(" ");
 		lcd.print(hour());
 		lcd.setCursor(13,0);
 		lcd.print(":");
@@ -73,7 +75,7 @@ void setup(){
 	Serial.print("LIBRARY VERSION: ");
 	Serial.println(DHT11LIB_VERSION);
 	Serial.print("Initializing SD card....");
-	if (!SD.begin(SD_CS_PIN)) {
+	if (!SD.begin(SD_CS_PIN))
 		Serial.println("SD Card initialization failed!");
 	else 
 		Serial.println("initialization complete.");
@@ -129,7 +131,7 @@ void loop(){
 	// If ntp has failed, keep trying.
 	// TODO: wouldn't it be cool if we cycled through an array of ntp addresses, rather than keep trying the one? 
 	if (timeStatus() != timeNotSet)
-		Serial.println("Time is set properly! :D")
+		Serial.println("Time is set properly! :D");
 	else {
 		setSyncProvider(getNtpTime);
 	}
