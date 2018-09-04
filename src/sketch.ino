@@ -12,6 +12,10 @@
 byte mac[] = {
   0x90, 0xA2, 0xDA, 0x0D, 0x10, 0x78 };
 
+IPAddress timeServer(132, 163, 4, 101);
+
+const int timeZone = -4;
+
 dht11 DHT;
 // initialize the library with the numbers of the interface pins
 ShiftLCD lcd(2, 4, 3);
@@ -32,77 +36,13 @@ int minuteCounter = 0;
 
 unsigned long epoch;
 
-time_t t;
+time_t prevDisplay = 0;
 
 File wttrLog;
 
 // A UDP instance to let us s20jend and receive packets over UDP
 EthernetUDP Udp;
 
-unsigned long handleNTPResponse() {
-	Serial.println("We have received a response");
-	// We've received a packet, read the data from it
-	Udp.read(packetBuffer, NTP_PACKET_SIZE); // read the packet into the buffer
-
-	// the timestamp starts at byte 40 of the received packet and is four bytes,
-	// or two words, long. First, extract the two words:
-
-	unsigned long highWord = word(packetBuffer[40], packetBuffer[41]);
-	unsigned long lowWord = word(packetBuffer[42], packetBuffer[43]);
-	// combine the four bytes (two words) into a long integer
-	// this is NTP time (seconds since Jan 1 1900):
-	unsigned long secsSince1900 = highWord << 16 | lowWord;
-	// now convert NTP time into everyday time:
-	// Serial.print("Unix time = ");
-	// Unix time starts on Jan 1 1970. In seconds, that's 2208988800:
-	const unsigned long seventyYears = 2208988800UL;
-	// subtract seventy years:
-	return secsSince1900 - seventyYears;
-}
-	
-
-
-void epochToUTC() {
-		// print the hour, minute and second:
-		Serial.print("The UTC time is ");       // UTC is the time at Greenwich Meridian (GMT)
-		Serial.print((epoch  % 86400L) / 3600); // print the hour (86400 equals secs per day)
-		Serial.print(':');
-		if (((epoch % 3600) / 60) < 10) {
-		// In the first 10 minutes of each hour, we'll want a leading '0'
-		Serial.print('0');
-		}
-		Serial.print((epoch  % 3600) / 60); // print the minute (3600 equals secs per minute)
-		Serial.print(':');
-		if ((epoch % 60) < 10) {
-		// In the first 10 seconds of each minute, we'll want a leading '0'
-		Serial.print('0');
-		}
-		Serial.println(epoch % 60); // print the second
-	}
-
-	// send an NTP request to the time server at the given address
-void sendNTPpacket(const char * address) {
-	// set all bytes in the buffer to 0
-	memset(packetBuffer, 0, NTP_PACKET_SIZE);
-	// Initialize values needed to form NTP request
-	// (see URL above for details on the packets)
-	packetBuffer[0] = 0b11100011;   // LI, Version, Mode
-	packetBuffer[1] = 0;     // Stratum, or type of clock
-	packetBuffer[2] = 6;     // Polling Interval
-	packetBuffer[3] = 0xEC;  // Peer Clock Precision
-	// 8 bytes of zero for Root Delay & Root Dispersion
-	packetBuffer[12]  = 49;
-	packetBuffer[13]  = 0x4E;
-	packetBuffer[14]  = 49;
-	packetBuffer[15]  = 52;
-
-	// all NTP fields have been given values, now
-	// you can send a packet requesting a timestamp:
-	Udp.beginPacket(address, 123); // NTP requests are to port 123
-	Udp.write(packetBuffer, NTP_PACKET_SIZE);
-	Udp.endPacket();
-	Serial.println("NTP packet sent.");
-}
 
 void printDigits(int digits){
   // utility function for digital clock display: prints preceding colon and leading 0
@@ -113,7 +53,6 @@ void printDigits(int digits){
 
 
 void printToLcd() {
-
 	// DISPLAY DATA
 	lcd.setCursor(0, 0);
 	lcd.print("Temp: ");
@@ -128,9 +67,9 @@ void printToLcd() {
 	lcd.print(DHT.humidity);
 	lcd.setCursor(9,1);
 	lcd.print("%");
-	if (timeStatus()) {
+	if (timeStatus() != timeNotSet) {
 		lcd.setCursor(11,0);
-		lcd.print((hour() - 4));
+		lcd.print((hour());
 		lcd.setCursor(13,0);
 		lcd.print(":");
 		if (minute() < 10) {
@@ -146,25 +85,28 @@ void setup(){
 	Serial.println(DHT11LIB_VERSION);
 	Serial.print("Initializing SD card....");
 	if (!SD.begin(4)) {
-		Serial.println("initialization failed.");
+		Serial.println("SD Card initialization failed!");
 
 	}
 	Serial.println("initialization complete.");
 	wttrLog = SD.open("wttrLog.csv", FILE_WRITE);
 	wttrLog.println("Beginning of log.");
 	wttrLog.close();	
-	Serial.println("Type,\tstatus,\tHumidity (%),\tTemperature (C)");
 	// start Ethernet and UDP
-    //Ethernet.init(10);
 	if (Ethernet.begin(mac) == 0) {
 		Serial.println("Failed to configure Ethernet using DHCP");
 		// raise flag to indicate on LCD.
 	}
-	Udp.begin(localPort);
+	Serial.print("IP Address is ");
+	Serial.println(Ethernet.localIP());
 	// set up the LCD's number of rows and columns: 
     lcd.begin(16, 2);
-	sendNTPpacket(timeServer); // send an NTP packet to a time server
-	t = now();
+	lcd.setCursor(0, 0);
+	lcd.print(Ethernet.localIP());
+	Serial.println("Type,\tstatus,\tHumidity (%),\tTemperature (C)");
+	Udp.begin(localPort);
+	setSyncProvider(getNtpTime);
+	//sendNTPpacket(timeServer); // send an NTP packet to a time server
 }
 
 void loop(){
@@ -191,9 +133,15 @@ void loop(){
 			break;
 	}
 	// Every hour or so, ping for an update of NTP.
-	if (minuteCounter >= 60) {
+	if (timeStatus() != timeNotSet) {
+		(now() != prevDisplay) {
+			prevDisplay = now();
+
+		}
+	}
+	if (minuteCounter >= 3600) {
 		minuteCounter = 0;
-		sendNTPpacket(timeServer); // send an NTP packet to a time server
+		setSyncProvider(getNtpTime); // send an NTP packet to a time server
 	}
 	else
 		minuteCounter++;
@@ -215,4 +163,56 @@ void loop(){
 	wttrLog.println(now());
 	wttrLog.close();
 	Ethernet.maintain();
+}
+
+/*-----------NTP Code for TimeLib.h------------------------------------------*/
+
+const int NTP_PACKET_SIZE = 48; // NTP time is in the first 48 bytes of message
+byte packetBuffer[NTP_PACKET_SIZE]; //buffer to hold incoming & outgoing packets
+
+time_t getNtpTime()
+{
+  while (Udp.parsePacket() > 0) ; // discard any previously received packets
+  Serial.println("Transmit NTP Request");
+  sendNTPpacket(timeServer);
+  uint32_t beginWait = millis();
+  while (millis() - beginWait < 1500) {
+    int size = Udp.parsePacket();
+    if (size >= NTP_PACKET_SIZE) {
+      Serial.println("Receive NTP Response");
+      Udp.read(packetBuffer, NTP_PACKET_SIZE);  // read packet into the buffer
+      unsigned long secsSince1900;
+      // convert four bytes starting at location 40 to a long integer
+      secsSince1900 =  (unsigned long)packetBuffer[40] << 24;
+      secsSince1900 |= (unsigned long)packetBuffer[41] << 16;
+      secsSince1900 |= (unsigned long)packetBuffer[42] << 8;
+      secsSince1900 |= (unsigned long)packetBuffer[43];
+      return secsSince1900 - 2208988800UL + timeZone * SECS_PER_HOUR;
+    }
+  }
+  Serial.println("No NTP Response :-(");
+  return 0; // return 0 if unable to get the time
+}
+
+// send an NTP request to the time server at the given address
+void sendNTPpacket(IPAddress &address)
+{
+  // set all bytes in the buffer to 0
+  memset(packetBuffer, 0, NTP_PACKET_SIZE);
+  // Initialize values needed to form NTP request
+  // (see URL above for details on the packets)
+  packetBuffer[0] = 0b11100011;   // LI, Version, Mode
+  packetBuffer[1] = 0;     // Stratum, or type of clock
+  packetBuffer[2] = 6;     // Polling Interval
+  packetBuffer[3] = 0xEC;  // Peer Clock Precision
+  // 8 bytes of zero for Root Delay & Root Dispersion
+  packetBuffer[12]  = 49;
+  packetBuffer[13]  = 0x4E;
+  packetBuffer[14]  = 49;
+  packetBuffer[15]  = 52;
+  // all NTP fields have been given values, now
+  // you can send a packet requesting a timestamp:                 
+  Udp.beginPacket(address, 123); //NTP requests are to port 123
+  Udp.write(packetBuffer, NTP_PACKET_SIZE);
+  Udp.endPacket();
 }
