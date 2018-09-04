@@ -161,6 +161,7 @@ void loop(){
 }
 
 String UTCString() {
+	// TODO leading zeroes for month, date, minute, timezone.
 	String datastring = "\"" + String(year()) + "-" + String(month()) + "-" + String(day()) + "T" + hour() + ":" + minute() + ":" + second() + timeZone + ":00\"";
 	return datastring;
 }
