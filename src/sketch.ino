@@ -26,15 +26,15 @@ ShiftLCD lcd(2, 4, 3);
 
 unsigned int localPort = 8888;       // local port to listen for UDP packets
 
-const char timeServer[] = "time.nist.gov"; // time.nist.gov NTP server
+//const char timeServer[] = "time.nist.gov"; // time.nist.gov NTP server
 
-const int NTP_PACKET_SIZE = 48; // NTP time stamp is in the first 48 bytes of the message
+//const int NTP_PACKET_SIZE = 48; // NTP time stamp is in the first 48 bytes of the message
 
-byte packetBuffer[NTP_PACKET_SIZE]; //buffer to hold incoming and outgoing packets
+//byte packetBuffer[NTP_PACKET_SIZE]; //buffer to hold incoming and outgoing packets
 
 int minuteCounter = 0;
 
-unsigned long epoch;
+//unsigned long epoch;
 
 time_t prevDisplay = 0;
 
@@ -69,7 +69,7 @@ void printToLcd() {
 	lcd.print("%");
 	if (timeStatus() != timeNotSet) {
 		lcd.setCursor(11,0);
-		lcd.print((hour());
+		lcd.print(hour());
 		lcd.setCursor(13,0);
 		lcd.print(":");
 		if (minute() < 10) {
@@ -134,7 +134,7 @@ void loop(){
 	}
 	// Every hour or so, ping for an update of NTP.
 	if (timeStatus() != timeNotSet) {
-		(now() != prevDisplay) {
+		if (now() != prevDisplay) {
 			prevDisplay = now();
 
 		}
@@ -152,10 +152,6 @@ void loop(){
 	Serial.print("Gas: ");
 	Serial.println(gas,DEC);
 	delay(1000);
-	if (Udp.parsePacket()) { 
-		epoch = handleNTPResponse();
-		setTime(epoch); 
-	}
 	Serial.print("Unix Time = ");
 	Serial.println(now());
 	wttrLog = SD.open("wttrLog.csv", FILE_WRITE);
