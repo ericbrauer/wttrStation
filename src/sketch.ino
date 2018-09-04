@@ -18,8 +18,9 @@ const int timeZone = -4;
 
 dht11 DHT;
 // initialize the library with the numbers of the interface pins
-ShiftLCD lcd(2, 4, 3);
+ShiftLCD lcd(2, 6, 3);
 
+#define SD_CS_PIN 4
 #define DHT11_PIN 5
 
 // The following are defs required for NTP
@@ -85,7 +86,7 @@ void setup(){
 	Serial.print("LIBRARY VERSION: ");
 	Serial.println(DHT11LIB_VERSION);
 	Serial.print("Initializing SD card....");
-	if (!SD.begin(4)) {
+	if (!SD.begin(SD_CS_PIN)) {
 		Serial.println("SD Card initialization failed!");
 
 	}
