@@ -54,6 +54,7 @@ void printDigits(int digits){
 
 void printToLcd() {
 	// DISPLAY DATA
+	//lcd.clear();
 	lcd.setCursor(0, 0);
 	lcd.print("Temp: ");
 	lcd.setCursor(6, 0);
@@ -105,16 +106,16 @@ void setup(){
 	lcd.print(Ethernet.localIP());
 	delay(3000);
 	lcd.clear();
-	Serial.println("Type,\tstatus,\tHumidity (%),\tTemperature (C)");
 	Udp.begin(localPort);
 	setSyncProvider(getNtpTime);
 	//sendNTPpacket(timeServer); // send an NTP packet to a time server
+	Serial.println("Type,\tstatus,\tHumidity (%),\tTemperature (C),\tGas");
 }
 
 void loop(){
 	int chk;
 	int gas;
-	Serial.print("DHT11, \t");
+	//Serial.print("DHT11, \t");
 	chk = DHT.read(DHT11_PIN); // READ DATA
 	gas = analogRead(0);
 	switch (chk) {
@@ -144,14 +145,24 @@ void loop(){
 	else {
 		setSyncProvider(getNtpTime);
 	}
-	if (minuteCounter >= 3600) {
+	if (minuteCounter >= 60) {
 		minuteCounter = 0;
-		setSyncProvider(getNtpTime); // send an NTP packet to a time server
+		// setSyncProvider(getNtpTime); // send an NTP packet to a time server
+		Serial.println("Writing to Log now.");
+		wttrLog = SD.open("wttrLog.csv", FILE_WRITE);
+		wttrLog.print(UTCString());
+		wttrLog.print(",\"");
+		wttrLog.print(DHT.humidity,1);
+		wttrLog.print("\",\"");
+		wttrLog.print(DHT.temperature,1);
+		wttrLog.println("\"");
+		wttrLog.close();
 	}
 	else
 		minuteCounter++;
 	printToLcd();
 	Serial.print(UTCString());
+	Serial.print(",\t");
 	Serial.print(DHT.humidity,1);
 	Serial.print(",\t");
 	Serial.print(DHT.temperature,1);
@@ -159,20 +170,12 @@ void loop(){
 	Serial.println(gas,DEC);
 	//Serial.print("Unix Time = ");
 	//Serial.println(now());
-	wttrLog = SD.open("wttrLog.csv", FILE_WRITE);
-	wttrLog.print(UTCString());
-	wttrLog.print(",\"");
-	wttrLog.print(DHT,humidity,1);
-	wttrLog.print("\",\"");
-	wttrLog.print(DHT.temperature,1);
-	wttrLog.println("\"");
-	wttrLog.close();
-	delay(1000);
 	Ethernet.maintain();
+	delay(1000);
 }
 
-String return UTCString() {
-	String datastring = "\"" + year() + "-" + month() + "-" + day() + "T" + hour() + ":" + minute() + ":" + second() + timeZone + ":00\"";
+String UTCString() {
+	String datastring = "\"" + String(year()) + "-" + String(month()) + "-" + String(day()) + "T" + hour() + ":" + minute() + ":" + second() + timeZone + ":00\"";
 	return datastring;
 }
 
