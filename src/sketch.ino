@@ -12,7 +12,7 @@
 byte mac[] = {
   0x90, 0xA2, 0xDA, 0x0D, 0x10, 0x78 };
 
-IPAddress timeServer(132, 163, 4, 101);
+IPAddress timeServer(158, 69, 125, 231);
 
 const int timeZone = -4;
 
