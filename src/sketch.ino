@@ -103,6 +103,8 @@ void setup(){
     lcd.begin(16, 2);
 	lcd.setCursor(0, 0);
 	lcd.print(Ethernet.localIP());
+	delay(3000);
+	lcd.clear();
 	Serial.println("Type,\tstatus,\tHumidity (%),\tTemperature (C)");
 	Udp.begin(localPort);
 	setSyncProvider(getNtpTime);
@@ -138,6 +140,9 @@ void loop(){
 			prevDisplay = now();
 
 		}
+	}
+	else {
+		setSyncProvider(getNtpTime);
 	}
 	if (minuteCounter >= 3600) {
 		minuteCounter = 0;
