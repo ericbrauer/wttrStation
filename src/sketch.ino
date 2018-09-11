@@ -82,7 +82,8 @@ void setup(){
 	
 	// TODO: it'd be good to not try and do all these writes if init has failed.
 	wttrLog = SD.open("wttrLog.csv", FILE_WRITE);
-	wttrLog.println("Beginning of log.");
+	//wttrLog.println("UTC,Humidity,Temperature");
+	wttrLog.println("beginning of log");
 	wttrLog.close();	
 	
 	// start Ethernet and UDP
@@ -140,7 +141,19 @@ void loop(){
 		// setSyncProvider(getNtpTime); // send an NTP packet to a time server
 		Serial.println("Writing to Log now.");
 		wttrLog = SD.open("wttrLog.csv", FILE_WRITE);
-		wttrLog.print(UTCString());
+		//wttrLog.print(UTCString());
+		wttrLog.print(year());
+		wttrLog.print("-");
+		wttrLog.print(month());
+		wttrLog.print("-");
+		wttrLog.print(day());
+		wttrLog.print("T");
+		wttrLog.print(hour());
+		wttrLog.print(":");
+		wttrLog.print(minute());
+		wttrLog.print(":");
+		wttrLog.print(second());
+		wttrLog.print("-04:00");
 		wttrLog.print(",\"");
 		wttrLog.print(DHT.humidity,1);
 		wttrLog.print("\",\"");
