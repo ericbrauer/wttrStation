@@ -103,14 +103,12 @@ void setup(){
 
 	Udp.begin(localPort);
 	setSyncProvider(getNtpTime);
-	Serial.println("Type,\tstatus,\tHumidity (%),\tTemperature (C),\tGas");
+	Serial.println("Type,\tstatus,\tHumidity (%),\tTemperature (C)");
 }
 
 void loop(){
 	int chk;
-	int gas;
 	chk = DHT.read(DHT11_PIN); // READ DATA
-	gas = analogRead(0);
 	switch (chk) {
 		case DHTLIB_OK:
 			Serial.print("OK,\t");
@@ -169,8 +167,7 @@ void loop(){
 	Serial.print(DHT.humidity,1);
 	Serial.print(",\t");
 	Serial.print(DHT.temperature,1);
-	Serial.print(",\t");
-	Serial.println(gas,DEC);
+	// Serial.print(",\t");
 	Ethernet.maintain();
 	delay(1000);
 }
