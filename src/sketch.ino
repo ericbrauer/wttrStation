@@ -5,6 +5,8 @@
 #include <SPI.h>
 #include <SD.h>
 #include <TimeLib.h> // https://www.pjrc.com/teensy/td_libs_Time.html
+#include <Wire.h>
+#include <SFE_BMP180.h>
 
 byte mac[] = {
   0x90, 0xA2, 0xDA, 0x0D, 0x10, 0x78 };
@@ -15,6 +17,9 @@ const int timeZone = -4;
 // TODO make this not be static OR be able to change with cursor
 
 dht11 DHT;
+SFE_BMP180 pressure;
+
+#define ALTITUDE 76 // altitute of Toronto, in metres.
 
 // initialize the library with the numbers of the interface pins
 ShiftLCD lcd(2, 6, 3);
@@ -86,6 +91,12 @@ void setup(){
 	wttrLog.println("beginning of log");
 	wttrLog.close();	
 	
+	// setup Barometer
+	if (pressure.begin())
+		Serial.println("BMP180 successfully initialized");
+	else
+		Serial.println("BMP180 has failed to initialize!");
+
 	// start Ethernet and UDP
 	if (Ethernet.begin(mac) == 0) {
 		Serial.println("Failed to configure Ethernet using DHCP");
@@ -108,6 +119,11 @@ void setup(){
 
 void loop(){
 	int chk;
+	// these variables used by BMP180 Barometer
+	char pressure_status;
+	double T,P,p0,a;
+
+	// humidity sensor diagnostic
 	chk = DHT.read(DHT11_PIN); // READ DATA
 	switch (chk) {
 		case DHTLIB_OK:
@@ -134,6 +150,40 @@ void loop(){
 	else {
 		setSyncProvider(getNtpTime);
 	}
+
+
+	pressure_status = pressure.startTemperature();
+	if (pressure_status != 0) // if it returns zero, there's an error. otherwise return ms to wait for reading.
+	{
+		delay(pressure_status); 
+		status = pressure.getTemperature(T);
+		if (pressure_status != 0)
+		{
+			Serial.print("BMP reports temperature of ");
+			Serial.print(T,2);
+			Serial.println(" deg C");
+
+			pressure_status = startPressure(3); // 3 is oversampling setting, high res and long wait.
+			if (pressure_status != 0) {
+				delay(pressure_status);
+
+				pressure_status = pressure.getPressure(P,T);
+				if (status != 0) {
+					p0 = pressure.sealevel(P,ALTITUDE);
+					Serial.print("BMP180 is reporting a relative pressure of ");
+					Serial.print(p0,2);
+					Serial.println(" hPa.");
+				}
+				else Serial.println("error getting pressure!");
+
+			}
+			else Serial.println("error starting pressure reading!");
+		
+		}
+		else Serial.println("error getting temperature!");
+	}
+	else Serial.println("error starting temperature reading!");
+
 	if (minuteCounter >= 60) {
 		minuteCounter = 0;
 		// setSyncProvider(getNtpTime); // send an NTP packet to a time server
