@@ -156,19 +156,19 @@ void loop(){
 	if (pressure_status != 0) // if it returns zero, there's an error. otherwise return ms to wait for reading.
 	{
 		delay(pressure_status); 
-		status = pressure.getTemperature(T);
+		pressure_status = pressure.getTemperature(T);
 		if (pressure_status != 0)
 		{
 			Serial.print("BMP reports temperature of ");
 			Serial.print(T,2);
 			Serial.println(" deg C");
 
-			pressure_status = startPressure(3); // 3 is oversampling setting, high res and long wait.
+			pressure_status = pressure.startPressure(3); // 3 is oversampling setting, high res and long wait.
 			if (pressure_status != 0) {
 				delay(pressure_status);
 
 				pressure_status = pressure.getPressure(P,T);
-				if (status != 0) {
+				if (pressure_status != 0) {
 					p0 = pressure.sealevel(P,ALTITUDE);
 					Serial.print("BMP180 is reporting a relative pressure of ");
 					Serial.print(p0,2);
