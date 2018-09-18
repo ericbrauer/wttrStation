@@ -59,17 +59,20 @@ void printDigits(int digits){
 void printToLcd() {
 	// DISPLAY DATA
 	lcd.setCursor(0, 0);
-	lcd.print("Temp: ");
-	lcd.setCursor(6, 0);
-	lcd.print(DHT.temperature);
-	lcd.setCursor(8,0);
+	lcd.print("T: ");
+	lcd.setCursor(3, 0);
+	if (T != 0)
+		lcd.print(T,1)
+	else
+		lcd.print(DHT.temperature);
+	lcd.setCursor(7,0);
 	lcd.print(char(223));
 	lcd.print("C");
 	lcd.setCursor(0,1);
-	lcd.print("Humid: ");
-	lcd.setCursor(7,1);
+	lcd.print("H: ");
+	lcd.setCursor(3,1);
 	lcd.print(DHT.humidity);
-	lcd.setCursor(9,1);
+	lcd.setCursor(5,1);
 	lcd.print("%");
 	if (timeStatus() != timeNotSet) {
 		// TODO Make this work with the printDigits function.
