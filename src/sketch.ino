@@ -140,7 +140,7 @@ void setup(){
 		Serial.println("OK.");
 	else
 		Serial.println("Not ready. Will retry.");
-	Serial.println("Type,\tstatus,\tHumidity (%),\tTemperature (C),\tPressure (mbar)");
+	Serial.println("Status,\tTime,\tHumidity (%),\tTemperature (C),\tPressure (mbar)");
 }
 
 void loop(){
