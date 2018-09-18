@@ -9,7 +9,8 @@
 #include <SFE_BMP180.h>
 
 #define MEGA // Use the MEGA 2560 and different pinouts
-// TODO: output the pressure and more accurate temp to LCD.
+// #define DEBUG // More Serial Messages
+
 // TODO: if there's no internet, stop the NTP requests to stop delays
 // TODO: output to sd also, and slope of pressure on lcd
 
@@ -66,7 +67,7 @@ void printToLcd() {
 		lcd.print(T,1);
 	else
 		lcd.print(DHT.temperature);
-	lcd.setCursor(7,0);
+	lcd.setCursor(8,0);
 	lcd.print(char(223));
 	lcd.print("C");
 	lcd.setCursor(0,1);
@@ -112,17 +113,18 @@ void setup(){
 	else
 		Serial.println("BMP180 has failed to initialize!");
 
+	// set up the LCD's number of rows and columns: 
+    lcd.begin(16, 2);
+	lcd.setCursor(0, 0);
+
 	// start Ethernet and UDP
 	if (Ethernet.begin(mac) == 0) {
 		Serial.println("Failed to configure Ethernet using DHCP");
-		// TODO: raise flag to indicate on LCD.
+		lcd.print("NO IP");
 	}
 	Serial.print("IP Address is ");
 	Serial.println(Ethernet.localIP());
 	
-	// set up the LCD's number of rows and columns: 
-    lcd.begin(16, 2);
-	lcd.setCursor(0, 0);
 	lcd.print(Ethernet.localIP());
 	delay(3000);
 	lcd.clear();
@@ -161,7 +163,9 @@ void loop(){
 	// If ntp has failed, keep trying.
 	// TODO: wouldn't it be cool if we cycled through an array of ntp addresses, rather than keep trying the one? 
 	if (timeStatus() != timeNotSet)
-		Serial.println("Time is set properly! :D");
+		#ifdef DEBUG 
+			Serial.println("Time is set properly! :D");
+		#endif
 	else {
 		setSyncProvider(getNtpTime);
 	}
@@ -220,6 +224,8 @@ void loop(){
 		wttrLog.print(",\"");
 		wttrLog.print(DHT.humidity,1);
 		wttrLog.print("\",\"");
+		wttrLog.print(T,2);
+		wttrLog.print("\",\"");
 		wttrLog.print(DHT.temperature,1);
 		wttrLog.println("\"");
 		wttrLog.close();
@@ -232,7 +238,10 @@ void loop(){
 	Serial.print(DHT.humidity,1);
 	Serial.print(",\t");
 	Serial.print(DHT.temperature,1);
-	// Serial.print(",\t");
+	Serial.print(",\t");
+	Serial.print(T,2);
+	Serial.print(",\t");
+	Serial.print(p0,1);
 	Ethernet.maintain();
 	delay(1000);
 }
