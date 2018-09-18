@@ -9,6 +9,9 @@
 #include <SFE_BMP180.h>
 
 #define MEGA // Use the MEGA 2560 and different pinouts
+// TODO: output the pressure and more accurate temp to LCD.
+// TODO: if there's no internet, stop the NTP requests to stop delays
+// TODO: output to sd also, and slope of pressure on lcd
 
 /*
 Any Arduino pins labeled:  SDA  SCL
