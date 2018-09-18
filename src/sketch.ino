@@ -178,9 +178,11 @@ void loop(){
 		pressure_status = pressure.getTemperature(T);
 		if (pressure_status != 0)
 		{
-			Serial.print("BMP reports temperature of ");
-			Serial.print(T,2);
-			Serial.println(" deg C");
+			#ifdef DEBUG
+				Serial.print("BMP reports temperature of ");
+				Serial.print(T,2);
+				Serial.println(" deg C");
+			#endif
 
 			pressure_status = pressure.startPressure(3); // 3 is oversampling setting, high res and long wait.
 			if (pressure_status != 0) {
@@ -189,9 +191,11 @@ void loop(){
 				pressure_status = pressure.getPressure(P,T);
 				if (pressure_status != 0) {
 					p0 = pressure.sealevel(P,ALTITUDE);
-					Serial.print("BMP180 is reporting a relative pressure of ");
-					Serial.print(p0,2);
-					Serial.println(" hPa.");
+					#ifdef DEBUG
+						Serial.print("BMP180 is reporting a relative pressure of ");
+						Serial.print(p0,2);
+						Serial.println(" hPa.");
+					#endif
 				}
 				else Serial.println("error getting pressure!");
 
