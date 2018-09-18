@@ -92,14 +92,12 @@ void printToLcd() {
 }
 void setup(){
 	Serial.begin(9600);
-	Serial.println("DHT TEST PROGRAM ");
-	Serial.print("LIBRARY VERSION: ");
-	Serial.println(DHT11LIB_VERSION);
+	Serial.println("WTTR STATION");
 	Serial.print("Initializing SD card....");
 	if (!SD.begin(SD_CS_PIN))
 		Serial.println("SD Card initialization failed!");
 	else 
-		Serial.println("initialization complete.");
+		Serial.println("OK.");
 	
 	// TODO: it'd be good to not try and do all these writes if init has failed.
 	wttrLog = SD.open("wttrLog.csv", FILE_WRITE);
@@ -108,8 +106,9 @@ void setup(){
 	wttrLog.close();	
 	
 	// setup Barometer
+	Serial.print("Initialzing Barometer....")
 	if (pressure.begin())
-		Serial.println("BMP180 successfully initialized");
+		Serial.println("OK.");
 	else
 		Serial.println("BMP180 has failed to initialize!");
 
@@ -118,20 +117,30 @@ void setup(){
 	lcd.setCursor(0, 0);
 
 	// start Ethernet and UDP
+	Serial.print("Initializing Ethernet Connection....");
 	if (Ethernet.begin(mac) == 0) {
 		Serial.println("Failed to configure Ethernet using DHCP");
 		lcd.print("NO IP");
 	}
-	Serial.print("IP Address is ");
-	Serial.println(Ethernet.localIP());
+	else {
+		Serial.println("OK.");
+		Serial.print("IP Address is ");
+		Serial.println(Ethernet.localIP());
 	
-	lcd.print(Ethernet.localIP());
+		lcd.print(Ethernet.localIP());
+	}
+	
 	delay(3000);
 	lcd.clear();
 
 	Udp.begin(localPort);
 	setSyncProvider(getNtpTime);
-	Serial.println("Type,\tstatus,\tHumidity (%),\tTemperature (C)");
+	Serial.print("Synchronising with NTP server....");
+	if (timeStatus() != timeNotSet)
+		Serial.println("OK.");
+	else
+		Serial.println("Not ready. Will retry.");
+	Serial.println("Type,\tstatus,\tHumidity (%),\tTemperature (C),\tPressure (mbar)");
 }
 
 void loop(){
@@ -174,6 +183,8 @@ void loop(){
 	pressure_status = pressure.startTemperature();
 	if (pressure_status != 0) // if it returns zero, there's an error. otherwise return ms to wait for reading.
 	{
+		Serial.print("Delay in (ms) is: ");
+		Serial.println(pressure_status);
 		delay(pressure_status); 
 		pressure_status = pressure.getTemperature(T);
 		if (pressure_status != 0)
@@ -186,6 +197,8 @@ void loop(){
 
 			pressure_status = pressure.startPressure(3); // 3 is oversampling setting, high res and long wait.
 			if (pressure_status != 0) {
+				Serial.print("Delay in ms is: ");
+				Serial.println(pressure_status);
 				delay(pressure_status);
 
 				pressure_status = pressure.getPressure(P,T);
@@ -211,6 +224,10 @@ void loop(){
 		minuteCounter = 0;
 		// setSyncProvider(getNtpTime); // send an NTP packet to a time server
 		Serial.println("Writing to Log now.");
+		float tempError = ((DHT.temperature - T) / T) * 100;
+		serial.print("DHT temp margin of error is ");
+		serial.print(tempError,2);
+		serial.println("%");
 		wttrLog = SD.open("wttrLog.csv", FILE_WRITE);
 		//wttrLog.print(UTCString());
 		wttrLog.print(year());
@@ -230,7 +247,7 @@ void loop(){
 		wttrLog.print("\",\"");
 		wttrLog.print(T,2);
 		wttrLog.print("\",\"");
-		wttrLog.print(DHT.temperature,1);
+		wttrLog.print(tempError,2);
 		wttrLog.println("\"");
 		wttrLog.close();
 	}
@@ -240,8 +257,6 @@ void loop(){
 	Serial.print(UTCString());
 	Serial.print(",\t");
 	Serial.print(DHT.humidity,1);
-	Serial.print(",\t");
-	Serial.print(DHT.temperature,1);
 	Serial.print(",\t");
 	Serial.print(T,2);
 	Serial.print(",\t");
