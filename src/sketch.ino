@@ -185,7 +185,7 @@ void loop(){
 	if (pressure_status != 0) // if it returns zero, there's an error. otherwise return ms to wait for reading.
 	{
 		Serial.print("Delay in (ms) is: ");
-		Serial.println(atoi(pressure_status));
+		Serial.println(int(pressure_status));
 		delay(pressure_status); 
 		pressure_status = pressure.getTemperature(T);
 		if (pressure_status != 0)
@@ -199,7 +199,7 @@ void loop(){
 			pressure_status = pressure.startPressure(3); // 3 is oversampling setting, high res and long wait.
 			if (pressure_status != 0) {
 				Serial.print("Delay in ms is: ");
-				Serial.println(atoi(pressure_status));
+				Serial.println(int(pressure_status));
 				delay(pressure_status);
 
 				pressure_status = pressure.getPressure(P,T);
