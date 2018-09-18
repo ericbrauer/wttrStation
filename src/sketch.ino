@@ -106,7 +106,7 @@ void setup(){
 	wttrLog.close();	
 	
 	// setup Barometer
-	Serial.print("Initialzing Barometer....")
+	Serial.print("Initialzing Barometer....");
 	if (pressure.begin())
 		Serial.println("OK.");
 	else
@@ -226,9 +226,9 @@ void loop(){
 		// setSyncProvider(getNtpTime); // send an NTP packet to a time server
 		Serial.println("Writing to Log now.");
 		float tempError = ((DHT.temperature - T) / T) * 100;
-		serial.print("DHT temp margin of error is ");
-		serial.print(tempError,2);
-		serial.println("%");
+		Serial.print("DHT temp margin of error is ");
+		Serial.print(tempError,2);
+		Serial.println("%");
 		wttrLog = SD.open("wttrLog.csv", FILE_WRITE);
 		//wttrLog.print(UTCString());
 		wttrLog.print(year());
