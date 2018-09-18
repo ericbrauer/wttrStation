@@ -41,6 +41,7 @@ ShiftLCD lcd(2, 6, 3);
 unsigned int localPort = 8888;       // local port to listen for UDP packets
 
 int minuteCounter = 0;
+double T, p0; // Temperature and pressure from BMP180
 
 File wttrLog;
 
@@ -62,7 +63,7 @@ void printToLcd() {
 	lcd.print("T: ");
 	lcd.setCursor(3, 0);
 	if (T != 0)
-		lcd.print(T,1)
+		lcd.print(T,1);
 	else
 		lcd.print(DHT.temperature);
 	lcd.setCursor(7,0);
@@ -135,7 +136,7 @@ void loop(){
 	int chk;
 	// these variables used by BMP180 Barometer
 	char pressure_status;
-	double T,P,p0,a;
+	double P,a;
 
 	// humidity sensor diagnostic
 	chk = DHT.read(DHT11_PIN); // READ DATA
