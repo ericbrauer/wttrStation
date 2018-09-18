@@ -171,10 +171,11 @@ void loop(){
 
 	// If ntp has failed, keep trying.
 	// TODO: wouldn't it be cool if we cycled through an array of ntp addresses, rather than keep trying the one? 
-	if (timeStatus() != timeNotSet)
-		#ifdef DEBUG 
+	if (timeStatus() != timeNotSet) {
+		#ifdef DEBUG
 			Serial.println("Time is set properly! :D");
 		#endif
+	}
 	else {
 		setSyncProvider(getNtpTime);
 	}
@@ -260,7 +261,7 @@ void loop(){
 	Serial.print(",\t");
 	Serial.print(T,2);
 	Serial.print(",\t");
-	Serial.print(p0,1);
+	Serial.println(p0,1);
 	Ethernet.maintain();
 	delay(1000);
 }
