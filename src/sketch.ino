@@ -8,6 +8,14 @@
 #include <Wire.h>
 #include <SFE_BMP180.h>
 
+#define MEGA // Use the MEGA 2560 and different pinouts
+
+/*
+Any Arduino pins labeled:  SDA  SCL
+Uno, Redboard, Pro:        A4   A5
+Mega2560, Due:             20   21
+*/
+
 byte mac[] = {
   0x90, 0xA2, 0xDA, 0x0D, 0x10, 0x78 };
 
