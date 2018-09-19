@@ -257,12 +257,14 @@ void loop(){
 		wttrLog.print(":");
 		wttrLog.print(second());
 		wttrLog.print("-04:00");
-		wttrLog.print(",\"");
+		wttrLog.print("\",\"");
 		wttrLog.print(DHT.humidity,1);
 		wttrLog.print("\",\"");
 		wttrLog.print(T,2);
 		wttrLog.print("\",\"");
 		wttrLog.print(tempError,2);
+		wttrLog.print("\",\"");
+		wttrLog.print(p0,1);
 		wttrLog.println("\"");
 		wttrLog.close();
 	}
