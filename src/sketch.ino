@@ -93,8 +93,8 @@ void printToLcd() {
 	lcd.print(DHT.humidity);
 	lcd.setCursor(5,1);
 	lcd.print("%");
-	lcd.setCursor("7,1");
-	lcd.print(pa,1);
+	lcd.setCursor(7,1);
+	lcd.print(p0,1);
 	lcd.print("mb");
 }
 void setup(){
