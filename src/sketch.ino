@@ -38,11 +38,15 @@ ShiftLCD lcd(2, 6, 3);
 
 #define SD_CS_PIN 4
 #define DHT11_PIN 5
+#define BUTTON1 7
+#define BUTTON2 8
 
 unsigned int localPort = 8888;       // local port to listen for UDP packets
 
 int minuteCounter = 0;
 double T, p0; // Temperature and pressure from BMP180
+
+
 
 File wttrLog;
 
@@ -67,15 +71,9 @@ void printToLcd() {
 		lcd.print(T,1);
 	else
 		lcd.print(DHT.temperature);
-	lcd.setCursor(8,0);
+	lcd.setCursor(7,0);
 	lcd.print(char(223));
 	lcd.print("C");
-	lcd.setCursor(0,1);
-	lcd.print("H: ");
-	lcd.setCursor(3,1);
-	lcd.print(DHT.humidity);
-	lcd.setCursor(5,1);
-	lcd.print("%");
 	if (timeStatus() != timeNotSet) {
 		// TODO Make this work with the printDigits function.
 		lcd.setCursor(11,0);
@@ -89,6 +87,15 @@ void printToLcd() {
 		}
 		lcd.print(minute());
 	}
+	lcd.setCursor(0,1);
+	lcd.print("H: ");
+	lcd.setCursor(3,1);
+	lcd.print(DHT.humidity);
+	lcd.setCursor(5,1);
+	lcd.print("%");
+	lcd.setCursor("7,1");
+	lcd.print(pa,1);
+	lcd.print("mb");
 }
 void setup(){
 	Serial.begin(9600);
@@ -103,7 +110,10 @@ void setup(){
 	wttrLog = SD.open("wttrLog.csv", FILE_WRITE);
 	//wttrLog.println("UTC,Humidity,Temperature");
 	wttrLog.println("beginning of log");
-	wttrLog.close();	
+	wttrLog.close();
+
+	pinMode(BUTTON1, INPUT); // for future use
+	pinMode(BUTTON2, INPUT); // for future use
 	
 	// setup Barometer
 	Serial.print("Initialzing Barometer....");
@@ -184,8 +194,10 @@ void loop(){
 	pressure_status = pressure.startTemperature();
 	if (pressure_status != 0) // if it returns zero, there's an error. otherwise return ms to wait for reading.
 	{
-		Serial.print("Delay in (ms) is: ");
-		Serial.println(int(pressure_status));
+		#ifdef DEBUG
+			Serial.print("Delay in (ms) is: "); 
+			Serial.println(int(pressure_status));
+		#endif
 		delay(pressure_status); 
 		pressure_status = pressure.getTemperature(T);
 		if (pressure_status != 0)
@@ -198,8 +210,10 @@ void loop(){
 
 			pressure_status = pressure.startPressure(3); // 3 is oversampling setting, high res and long wait.
 			if (pressure_status != 0) {
-				Serial.print("Delay in ms is: ");
-				Serial.println(int(pressure_status));
+				#ifdef DEBUG
+					Serial.print("Delay in ms is: ");
+					Serial.println(int(pressure_status));
+				#endif
 				delay(pressure_status);
 
 				pressure_status = pressure.getPressure(P,T);
@@ -262,6 +276,13 @@ void loop(){
 	Serial.print(T,2);
 	Serial.print(",\t");
 	Serial.println(p0,1);
+
+	if (digitalRead(BUTTON1))
+		Serial.println("Button 1 pressed.");
+
+	if (digitalRead(BUTTON2))
+		Serial.println("Button 2 pressed.");
+
 	Ethernet.maintain();
 	delay(1000);
 }
