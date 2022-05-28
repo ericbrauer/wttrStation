@@ -1,16 +1,23 @@
 #include <Arduino.h>
-/* How to use the DHT-22 sensor with Arduino uno
-   Temperature and humidity sensor
-*/
 
 //Libraries
 #include <DHT.h>
+#include <ShiftLCD.h>
 
 //Constants
-#define DHTPIN D3     // what pin we're connected to
+
+// for humidity
+#define DHTPIN D8     // what pin we're connected to
 #define DHTTYPE DHT22   // DHT 22  (AM2302)
+
+// for barometer
+#define ALTITUDE 76 // altitute of Toronto, in metres.
+
+
 DHT dht(DHTPIN, DHTTYPE); //// Initialize DHT sensor for normal 16mhz Arduino
 
+// initialize the library with the numbers of the interface pins
+// ShiftLCD lcd(2, 6, 3);  update these pins for the new scheme
 
 //Variables
 int chk;
