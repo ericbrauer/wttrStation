@@ -3,6 +3,7 @@
 //Libraries
 #include <DHT.h>
 #include <ShiftLCD.h>
+#include <SFE_BMP180.h>
 
 //Constants
 
@@ -13,11 +14,16 @@
 // for barometer
 #define ALTITUDE 76 // altitute of Toronto, in metres.
 
+// Uncomment for more Serial Messages
+// #define DEBUG 
 
 DHT dht(DHTPIN, DHTTYPE); //// Initialize DHT sensor for normal 16mhz Arduino
 
 // initialize the library with the numbers of the interface pins
 ShiftLCD lcd(D6, D7, D8); // update these pins for the new scheme
+
+// initialize pressure sensor, with I2C
+SFE_BMP180 pressure;
 
 //Variables
 int chk;
@@ -51,10 +57,17 @@ void setup()
 {
   Serial.begin(115200);
   dht.begin();
+	
+  // setup Barometer
+	Serial.print("Initialzing Barometer....");
+	if (pressure.begin())
+		Serial.println("OK.");
+	else
+		Serial.println("BMP180 has failed to initialize!");
 
 	// set up the LCD's number of rows and columns: 
-    lcd.begin(16, 2);
-	  lcd.setCursor(0, 0);
+  lcd.begin(16, 2);
+	lcd.setCursor(0, 0);
 }
 
 void loop()
@@ -69,6 +82,6 @@ void loop()
     Serial.print(" %, Temp: ");
     Serial.print(temp);
     Serial.println(" Celsius");
-    delay(10000); //Delay 2 sec.
     printToLcd(temp, hum, 0, 0);
+    delay(10000); //Delay 2 sec.
 }
