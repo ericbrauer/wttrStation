@@ -37,3 +37,8 @@
 .build/*
 .vscode/*
 F1R7R18J0COM1OB.webp
+.pio/build/nodemcuv2/firmware.bin
+.pio/build/nodemcuv2/firmware.bin
+.pio/build/nodemcuv2/firmware.elf
+.pio/build/nodemcuv2/idedata.json
+.pio/build/nodemcuv2/.sconsign310.dblite
