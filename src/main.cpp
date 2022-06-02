@@ -23,12 +23,14 @@ DHT dht(DHTPIN, DHTTYPE); //// Initialize DHT sensor for normal 16mhz Arduino
 ShiftLCD lcd(D6, D7, D8); // update these pins for the new scheme
 
 // initialize pressure sensor, with I2C
-SFE_BMP180 pressure;
+SFE_BMP180 pressure;  // on NodeMCU SCL == D1 SDA == D2
 
 //Variables
 int chk;
 float hum;  //Stores humidity value
 float temp; //Stores temperature value
+double T, P; // Temperature and pressure from BMP180
+double p0; // also used by BMP180
 
 void printToLcd(float temp, float humid, float bmp_temp, float pres) {
 	// DISPLAY DATA
@@ -48,9 +50,64 @@ void printToLcd(float temp, float humid, float bmp_temp, float pres) {
 	lcd.print(humid);
 	lcd.setCursor(7,1);
 	lcd.print("%");
-	lcd.setCursor(10,1);
+	lcd.setCursor(9,1);
 	lcd.print(pres,1);
 	lcd.print("mb");
+}
+
+double get_bmp_temp() {
+	char bmp_status;
+	bmp_status = pressure.startTemperature();
+
+	if (bmp_status != 0) // if it returns zero, there's an error. otherwise return ms to wait for reading.
+	{
+		#ifdef DEBUG
+			Serial.print("Delay in (ms) is: "); 
+			Serial.println(int(pressure_status));
+		#endif
+		delay(bmp_status); 
+		bmp_status = pressure.getTemperature(T);
+		if (bmp_status != 0)
+		{
+			#ifdef DEBUG
+				Serial.print("BMP reports temperature of ");
+				Serial.print(T,2);
+				Serial.println(" deg C");
+			#endif
+			return T;
+		}
+		else Serial.println("error getting temperature!");
+	}
+	else Serial.println("error starting temperature reading!");
+	return 0;
+}
+
+double get_bmp_pres() {
+	char bmp_status;
+
+	bmp_status = pressure.startPressure(3); // 3 is oversampling setting, high res and long wait.
+	if (bmp_status != 0) {
+		#ifdef DEBUG
+			Serial.print("Delay in ms is: ");
+			Serial.println(int(pressure_status));
+		#endif
+		delay(bmp_status);
+
+		bmp_status = pressure.getPressure(P,T);
+		if (bmp_status != 0) {
+			p0 = pressure.sealevel(P,ALTITUDE);
+			#ifdef DEBUG
+				Serial.print("BMP180 is reporting a relative pressure of ");
+				Serial.print(p0,2);
+				Serial.println(" hPa.");
+			#endif
+			return P;
+		}
+		else Serial.println("error getting pressure!");
+
+	}
+	else Serial.println("error starting pressure reading!");
+	return 0;
 }
 
 void setup()
@@ -76,12 +133,19 @@ void loop()
     //Read data and store it to variables hum and temp
     hum = dht.readHumidity();
     temp= dht.readTemperature();
+	T = get_bmp_temp();
+	P = get_bmp_pres();
+	Serial.print("BMP reports: ");
+	Serial.println(T);
     //Print temp and humidity values to serial monitor
     Serial.print("Humidity: ");
     Serial.print(hum);
     Serial.print(" %, Temp: ");
     Serial.print(temp);
-    Serial.println(" Celsius");
-    printToLcd(temp, hum, 0, 0);
+    Serial.print(" Celsius, ");
+	Serial.print("Pressure: ");
+	Serial.print(P);
+	Serial.println(" hPa.");
+    printToLcd(temp, hum, T, P);
     delay(10000); //Delay 2 sec.
 }
